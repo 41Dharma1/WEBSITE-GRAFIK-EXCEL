@@ -91,7 +91,8 @@
         const sheetId = '1vTjmjtHeut2HUwGNNG3yQ9V4q9o4Vjv77SJOGWEoZTY_zeo4kTJyVzhVhMIi--R2ZfllhxatcKYDpTQ';
         
         // Perhatikan variabel di bawah ini menggunakan sheetId, bukan sheet1
-        const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json`;
+// Tambahkan t=${new Date().getTime()} di ujung URL
+const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&t=${new Date().getTime()}`;
 
         fetch(url)
             .then(res => res.text())
