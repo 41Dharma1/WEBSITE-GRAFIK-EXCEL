@@ -1,6 +1,6 @@
 // Gunakan ID yang benar dari Google Sheets Anda
 const sheetId = '1i_9Weeg_TxntAmTJ8nlAHAns8n8OslAG-ePWxCZvdiY';
-const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=0`;
+const csvUrl = `https://docs.google.com/spreadsheets/d/e/2PACX-1vTjmjtHeut2HUwGNNG3yQ9V4q9o4Vjv77SJOGWEoZTY_zeo4kTJyVzhVhMIi--R2ZfllhxatcKYDpTQ/pubhtml?gid=0&single=true`;
 
 async function updateDashboard() {
     const loadingEl = document.getElementById('loading');
