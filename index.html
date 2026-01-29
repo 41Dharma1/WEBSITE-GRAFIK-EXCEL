@@ -3,123 +3,153 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analytics Dashboard</title>
+    <title>Dashboard Analytics Modern</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700&display=swap" rel="stylesheet">
+    
     <style>
         :root {
-            --bg-color: #f4f7fe;
-            --card-bg: #ffffff;
-            --text-main: #2b3674;
-            --accent: #4318ff;
+            --primary: #4318ff;
+            --bg: #f4f7fe;
+            --card: #ffffff;
+            --text: #2b3674;
+            --sub: #a3aed0;
         }
 
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-main);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
             margin: 0;
-            padding: 40px 20px;
             display: flex;
             justify-content: center;
+            align-items: center;
+            min-height: 100vh;
         }
 
-        .dashboard-card {
-            background: var(--card-bg);
-            width: 100%;
-            max-width: 900px;
-            padding: 30px;
-            border-radius: 20px;
-            box-shadow: 0px 20px 50px rgba(0, 0, 0, 0.05);
+        .container {
+            background: var(--card);
+            width: 90%;
+            max-width: 850px;
+            padding: 40px;
+            border-radius: 30px;
+            box-shadow: 0px 20px 50px rgba(0, 0, 0, 0.04);
+            transition: transform 0.3s ease;
+        }
+
+        .container:hover {
+            transform: translateY(-5px);
         }
 
         .header {
-            margin-bottom: 30px;
-            border-left: 5px solid var(--accent);
-            padding-left: 15px;
+            margin-bottom: 40px;
+            text-align: center;
         }
 
         .header h1 {
+            font-size: 28px;
             margin: 0;
-            font-size: 24px;
-            letter-spacing: -0.5px;
+            color: var(--text);
+            font-weight: 700;
         }
 
         .header p {
-            margin: 5px 0 0;
-            color: #a3aed0;
-            font-size: 14px;
+            color: var(--sub);
+            margin-top: 10px;
+            font-size: 15px;
         }
 
-        canvas {
-            max-height: 450px;
+        .chart-box {
+            position: relative;
+            height: 400px;
+            width: 100%;
+        }
+
+        #loading {
+            text-align: center;
+            color: var(--primary);
+            font-weight: bold;
         }
     </style>
 </head>
 <body>
 
-    <div class="dashboard-card">
+    <div class="container">
         <div class="header">
-            <h1>Laporan Penjualan Real-time</h1>
-            <p>Data otomatis tersinkronisasi dengan Google Sheets</p>
+            <h1>📊 Sales Dashboard</h1>
+            <p>Data terhubung langsung dengan Google Sheets</p>
         </div>
-        
-        <canvas id="myChart"></canvas>
+
+        <div id="loading">Memuat data...</div>
+        <div class="chart-box">
+            <canvas id="myChart"></canvas>
+        </div>
     </div>
 
     <script>
+        // PASTIKAN ID INI BENAR
         const sheetId = '1vTjmjtHeut2HUwGNNG3yQ9V4q9o4Vjv77SJOGWEoZTY_zeo4kTJyVzhVhMIi--R2ZfllhxatcKYDpTQ';
-        const base = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json`;
+        
+        // Perhatikan variabel di bawah ini menggunakan sheetId, bukan sheet1
+        const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json`;
 
-        fetch(base)
+        fetch(url)
             .then(res => res.text())
-            .then(data => {
-                const json = JSON.parse(data.substring(47).slice(0, -2));
+            .then(rawData => {
+                // Menghapus teks sampah dari Google
+                const dataText = rawData.substring(47).slice(0, -2);
+                const json = JSON.parse(dataText);
                 const rows = json.table.rows;
 
-                // Memfilter data agar baris kosong tidak ikut terhitung
-                const labels = rows.filter(row => row.c[0]).map(row => row.c[0].v);
-                const values = rows.filter(row => row.c[1]).map(row => row.c[1].v);
+                // Mengambil data dan memfilter baris kosong
+                const labels = rows.filter(r => r.c[0]).map(r => r.c[0].v);
+                const values = rows.filter(r => r.c[1]).map(r => r.c[1].v);
+
+                document.getElementById('loading').style.display = 'none';
 
                 const ctx = document.getElementById('myChart').getContext('2d');
                 
-                // Membuat gradien untuk bar chart
+                // Membuat efek gradien warna
                 const gradient = ctx.createLinearGradient(0, 0, 0, 400);
-                gradient.addColorStop(0, 'rgba(67, 24, 255, 0.8)');
-                gradient.addColorStop(1, 'rgba(67, 24, 255, 0.2)');
+                gradient.addColorStop(0, '#4318ff');
+                gradient.addColorStop(1, 'rgba(67, 24, 255, 0.1)');
 
                 new Chart(ctx, {
                     type: 'bar',
                     data: {
                         labels: labels,
                         datasets: [{
-                            label: 'Total Unit',
+                            label: 'Jumlah Penjualan',
                             data: values,
                             backgroundColor: gradient,
-                            borderRadius: 8, // Membuat sudut bar tumpul
-                            borderSkipped: false,
+                            borderRadius: 12,
+                            hoverBackgroundColor: '#3311db'
                         }]
                     },
                     options: {
                         responsive: true,
+                        maintainAspectRatio: false,
                         plugins: {
-                            legend: { display: false } // Sembunyikan label legend yang mengganggu
+                            legend: { display: false }
                         },
                         scales: {
-                            x: { 
-                                grid: { display: false },
-                                ticks: { color: '#a3aed0', font: { size: 12 } }
-                            },
                             y: { 
                                 beginAtZero: true,
-                                grid: { color: '#f4f7fe' },
+                                grid: { color: '#f0f0f0' },
+                                ticks: { color: '#a3aed0' }
+                            },
+                            x: { 
+                                grid: { display: false },
                                 ticks: { color: '#a3aed0' }
                             }
                         }
                     }
                 });
             })
-            .catch(err => console.error("Error loading data:", err));
+            .catch(err => {
+                console.error("Error:", err);
+                document.getElementById('loading').innerHTML = "Gagal memuat data. Periksa Izin Google Sheets!";
+            });
     </script>
 </body>
 </html>
