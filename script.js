@@ -1,10 +1,17 @@
-const csvUrl = 'https://docs.google.com/spreadsheets/d/1i_9Weeg_TxntAmTJ8nlAHAns8n8OslAG-ePWxCZvdiY/export?format=csv&gid=0';
+// Gunakan ID yang benar dari Google Sheets Anda
+const sheetId = '1i_9Weeg_TxntAmTJ8nlAHAns8n8OslAG-ePWxCZvdiY';
+const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=0`;
 
 async function updateDashboard() {
+    const loadingEl = document.getElementById('loading');
+    const totalQtyEl = document.getElementById('total-qty');
+    const totalLocEl = document.getElementById('total-loc');
+
     try {
         const response = await fetch(csvUrl);
-        const data = await response.text();
+        if (!response.ok) throw new Error('Gagal akses spreadsheet');
         
+        const data = await response.text();
         const rows = data.split('\n').slice(1);
         const locationsMap = {};
         let totalQtySum = 0;
@@ -14,7 +21,6 @@ async function updateDashboard() {
             if (columns.length > 5) {
                 const lokasi = columns[5].trim();
                 const qty = parseFloat(columns[4]) || 0;
-
                 if (lokasi) {
                     locationsMap[lokasi] = (locationsMap[lokasi] || 0) + qty;
                     totalQtySum += qty;
@@ -22,29 +28,29 @@ async function updateDashboard() {
             }
         });
 
-        // Update Kartu Statistik
-        const sortedKeys = Object.keys(locationsMap).sort();
-        document.getElementById('total-qty').innerText = totalQtySum.toLocaleString('id-ID');
-        document.getElementById('total-loc').innerText = sortedKeys.length;
-        document.getElementById('last-update').innerText = new Date().toLocaleTimeString('id-ID');
-        document.getElementById('current-date').innerText = new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        // Update elemen teks jika elemen ditemukan (mencegah error null)
+        if (totalQtyEl) totalQtyEl.innerText = totalQtySum.toLocaleString('id-ID');
+        if (totalLocEl) totalLocEl.innerText = Object.keys(locationsMap).length;
+        if (loadingEl) loadingEl.style.display = 'none';
 
+        const sortedKeys = Object.keys(locationsMap).sort();
         const values = sortedKeys.map(key => locationsMap[key]);
         renderChart(sortedKeys, values);
 
     } catch (error) {
         console.error('Error:', error);
+        if (loadingEl) {
+            loadingEl.innerText = 'Gagal memuat data!';
+            loadingEl.style.backgroundColor = '#ff4d4d';
+        }
     }
 }
 
 function renderChart(labels, values) {
-    const ctx = document.getElementById('mainBarChart').getContext('2d');
-    
-    // Gradien Warna
-    const blueGradient = ctx.createLinearGradient(0, 0, 0, 400);
-    blueGradient.addColorStop(0, '#0061ff');
-    blueGradient.addColorStop(1, '#60efff');
+    const canvas = document.getElementById('mainBarChart');
+    if (!canvas) return;
 
+    const ctx = canvas.getContext('2d');
     new Chart(ctx, {
         type: 'bar',
         data: {
@@ -52,28 +58,17 @@ function renderChart(labels, values) {
             datasets: [{
                 label: 'Quantity',
                 data: values,
-                backgroundColor: blueGradient,
+                backgroundColor: '#0061ff',
                 borderRadius: 8,
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false }
-            },
-            scales: {
-                y: { 
-                    beginAtZero: true,
-                    grid: { drawBorder: false, color: '#f0f0f0' }
-                },
-                x: { 
-                    grid: { display: false }
-                }
-            }
+            plugins: { legend: { display: false } }
         }
     });
 }
 
-// Jalankan saat halaman dimuat
-updateDashboard();
+// Menunggu DOM selesai dimuat sebelum menjalankan script
+document.addEventListener('DOMContentLoaded', updateDashboard);
