@@ -3,26 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Analytics Database</title>
+    <title>Dashboard Monitoring Transit</title>
     
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700&display=swap" rel="stylesheet">
-    
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <div class="container">
-        <div class="header">
-            <h1>📊 Grafik Quantity per Lokasi</h1>
-            <p>Warning Data Otomatis</p>
+    <div class="main-container">
+        <header class="dashboard-header">
+            <div class="header-content">
+                <h1>📊 Monitoring Database Transit</h1>
+                <p id="current-date"></p>
+            </div>
+            <div class="badge-live">LIVE DATA</div>
+        </header>
+
+        <div class="stats-row">
+            <div class="stat-card">
+                <span class="stat-label">Total Quantity</span>
+                <h2 id="total-qty">0</h2>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">Total Lokasi Transit</span>
+                <h2 id="total-loc">0</h2>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">Update Terakhir</span>
+                <h2 id="last-update">-</h2>
+            </div>
         </div>
 
-        <div id="loading">Menghubungkan ke Database...</div>
-        
-        <div class="chart-container">
-            <canvas id="canvasChart"></canvas>
+        <div class="chart-section">
+            <div class="chart-card">
+                <div class="card-header">
+                    <h3>Quantity Berdasarkan Lokasi Transit</h3>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="mainBarChart"></canvas>
+                </div>
+            </div>
         </div>
     </div>
 
