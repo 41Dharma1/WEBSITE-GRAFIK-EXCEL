@@ -1,101 +1,76 @@
-// URL Export CSV dari Google Sheets Anda
-const csvUrl = 'https://docs.google.com/spreadsheets/d/1i_9Weeg_TxntAmTJ8nlAHAns8n8OslAG-ePWxCZvdiY/export?format=csv&gid=0';
-
-async function fetchData() {
-    try {
-        const response = await fetch(csvUrl);
-        const data = await response.text();
-        
-        // Memecah baris CSV (Lewati baris header pertama)
-        const rows = data.split('\n').slice(1); 
-        const locationsMap = {};
-
-        rows.forEach(row => {
-            // Memisahkan kolom berdasarkan koma
-            const columns = row.split(',');
-            
-            // Indeks berdasarkan file Anda:
-            // Kolom index 4 (E) = QUANTITY
-            // Kolom index 5 (F) = LOKASI TRANSIT
-            if (columns.length > 5) {
-                const lokasi = columns[5].trim(); 
-                const quantity = parseFloat(columns[4]) || 0; 
-
-                if (lokasi && lokasi !== "") {
-                    // Penjumlahan quantity per lokasi
-                    locationsMap[lokasi] = (locationsMap[lokasi] || 0) + quantity;
-                }
-            }
-        });
-
-        // --- PROSES PENGURUTAN (SORTING) ---
-        
-        // 1. Mengubah Object menjadi Array agar bisa diurutkan
-        const sortedData = Object.keys(locationsMap).map(key => {
-            return { lokasi: key, total: locationsMap[key] };
-        });
-
-        // 2. Urutkan berdasarkan Nama Lokasi (A-Z)
-        // Jika ingin urut berdasarkan Quantity terbesar, ganti menjadi: b.total - a.total
-        sortedData.sort((a, b) => a.lokasi.localeCompare(b.lokasi));
-
-        // 3. Pisahkan kembali menjadi array untuk Chart.js
-        const labels = sortedData.map(item => item.lokasi);
-        const values = sortedData.map(item => item.total);
-
-        // Sembunyikan loading
-        document.getElementById('loading').style.display = 'none';
-        
-        renderChart(labels, values);
-    } catch (error) {
-        console.error('Gagal memuat data:', error);
-        document.getElementById('loading').innerText = 'Gagal memuat data. Periksa izin Publish to Web.';
-    }
+:root {
+    --primary-color: #0061ff;
+    --bg-color: #f0f2f5;
+    --text-dark: #1c1e21;
+    --text-muted: #65676b;
+    --white: #ffffff;
+    --shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
-function renderChart(labels, values) {
-    const ctx = document.getElementById('canvasChart').getContext('2d');
-    
-    const gradient = ctx.createLinearGradient(0, 0, 0, 400);
-    gradient.addColorStop(0, '#4318ff');
-    gradient.addColorStop(1, 'rgba(67, 24, 255, 0.1)');
-
-    new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Total Quantity',
-                data: values,
-                backgroundColor: gradient,
-                borderRadius: 10,
-                borderSkipped: false,
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false }
-            },
-            scales: {
-                y: { 
-                    beginAtZero: true,
-                    grid: { color: '#f0f0f0' },
-                    ticks: { color: '#a3aed0' }
-                },
-                x: { 
-                    grid: { display: false },
-                    ticks: { 
-                        color: '#a3aed0',
-                        autoSkip: false, // Menampilkan semua label lokasi
-                        maxRotation: 45, // Memiringkan teks jika terlalu panjang
-                        minRotation: 45
-                    }
-                }
-            }
-        }
-    });
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-dark);
+    margin: 0;
+    padding: 20px;
 }
 
-fetchData();
+.main-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* Header */
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.dashboard-header h1 { margin: 0; font-size: 24px; }
+.dashboard-header p { margin: 5px 0 0; color: var(--text-muted); font-size: 14px; }
+
+.badge-live {
+    background: #e7f3ff;
+    color: var(--primary-color);
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+/* Stats Row */
+.stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.stat-card {
+    background: var(--white);
+    padding: 20px;
+    border-radius: 16px;
+    box-shadow: var(--shadow);
+    border-bottom: 4px solid var(--primary-color);
+}
+
+.stat-label { font-size: 13px; color: var(--text-muted); font-weight: 600; }
+.stat-card h2 { margin: 10px 0 0; font-size: 28px; color: var(--text-dark); }
+
+/* Chart Card */
+.chart-card {
+    background: var(--white);
+    border-radius: 16px;
+    box-shadow: var(--shadow);
+    padding: 25px;
+}
+
+.card-header h3 { margin: 0 0 20px 0; font-size: 18px; }
+
+.chart-wrapper {
+    position: relative;
+    height: 400px;
+    width: 100%;
+}
