@@ -1,62 +1,125 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
-    <title>Dashboard Data Excel</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #f4f7fe;
+            --card-bg: #ffffff;
+            --text-main: #2b3674;
+            --accent: #4318ff;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 40px 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .dashboard-card {
+            background: var(--card-bg);
+            width: 100%;
+            max-width: 900px;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0px 20px 50px rgba(0, 0, 0, 0.05);
+        }
+
+        .header {
+            margin-bottom: 30px;
+            border-left: 5px solid var(--accent);
+            padding-left: 15px;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+            letter-spacing: -0.5px;
+        }
+
+        .header p {
+            margin: 5px 0 0;
+            color: #a3aed0;
+            font-size: 14px;
+        }
+
+        canvas {
+            max-height: 450px;
+        }
+    </style>
 </head>
 <body>
 
-    <div style="width: 800px; margin: auto;">
+    <div class="dashboard-card">
+        <div class="header">
+            <h1>Laporan Penjualan Real-time</h1>
+            <p>Data otomatis tersinkronisasi dengan Google Sheets</p>
+        </div>
+        
         <canvas id="myChart"></canvas>
     </div>
 
     <script>
-    // 1. ID diambil dari URL yang Anda berikan
-    const sheetId = '1vTjmjtHeut2HUwGNNG3yQ9V4q9o4Vjv77SJOGWEoZTY_zeo4kTJyVzhVhMIi--R2ZfllhxatcKYDpTQ';
-    // Gunakan query gviz untuk mendapatkan data JSON
-    const base = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json`;
+        const sheetId = '1vTjmjtHeut2HUwGNNG3yQ9V4q9o4Vjv77SJOGWEoZTY_zeo4kTJyVzhVhMIi--R2ZfllhxatcKYDpTQ';
+        const base = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json`;
 
-    fetch(base)
-        .then(res => res.text())
-        .then(data => {
-            // Membersihkan format JSON dari Google
-            const json = JSON.parse(data.substring(47).slice(0, -2));
-            const rows = json.table.rows;
+        fetch(base)
+            .then(res => res.text())
+            .then(data => {
+                const json = JSON.parse(data.substring(47).slice(0, -2));
+                const rows = json.table.rows;
 
-            // 2. Mapping Data
-            // row.c[0] adalah Kolom A, row.c[1] adalah Kolom B
-            // Kita gunakan slice(1) jika baris pertama adalah header (Judul Kolom)
-            const labels = rows.map(row => row.c[0] ? row.c[0].v : ""); 
-            const values = rows.map(row => row.c[1] ? row.c[1].v : 0);
+                // Memfilter data agar baris kosong tidak ikut terhitung
+                const labels = rows.filter(row => row.c[0]).map(row => row.c[0].v);
+                const values = rows.filter(row => row.c[1]).map(row => row.c[1].v);
 
-            // Jika baris pertama di Excel adalah Nama/Produk (Header), hapus dari chart:
-            // labels.shift(); 
-            // values.shift();
+                const ctx = document.getElementById('myChart').getContext('2d');
+                
+                // Membuat gradien untuk bar chart
+                const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+                gradient.addColorStop(0, 'rgba(67, 24, 255, 0.8)');
+                gradient.addColorStop(1, 'rgba(67, 24, 255, 0.2)');
 
-            // 3. Render Chart
-            const ctx = document.getElementById('myChart').getContext('2d');
-            new Chart(ctx, {
-                type: 'bar', 
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Data dari Google Sheets',
-                        data: values,
-                        backgroundColor: 'rgba(54, 162, 235, 0.6)',
-                        borderColor: 'rgba(54, 162, 235, 1)',
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    scales: {
-                        y: {
-                            beginAtZero: true
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Total Unit',
+                            data: values,
+                            backgroundColor: gradient,
+                            borderRadius: 8, // Membuat sudut bar tumpul
+                            borderSkipped: false,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: { display: false } // Sembunyikan label legend yang mengganggu
+                        },
+                        scales: {
+                            x: { 
+                                grid: { display: false },
+                                ticks: { color: '#a3aed0', font: { size: 12 } }
+                            },
+                            y: { 
+                                beginAtZero: true,
+                                grid: { color: '#f4f7fe' },
+                                ticks: { color: '#a3aed0' }
+                            }
                         }
                     }
-                }
-            });
-        })
-        .catch(err => console.error("Error fetching data:", err));
+                });
+            })
+            .catch(err => console.error("Error loading data:", err));
     </script>
 </body>
 </html>
