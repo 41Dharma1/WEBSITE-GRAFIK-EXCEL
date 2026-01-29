@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monitoring Transit</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <title>Dashboard Overview Pallet Mover</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
@@ -12,27 +11,36 @@
     <div class="main-container">
         <header class="dashboard-header">
             <div class="header-top">
-                <h1>📊 Monitoring Transit</h1>
-                <div id="loading" class="badge-live">Menghubungkan...</div>
+                <h1>📦 Overview Pallet Mover</h1>
+                <div id="loading" class="badge-live">SINKRONISASI...</div>
             </div>
             
-            <nav class="navigation-menu">
-                <a href="index.html" class="btn btn-1 active">OVERVIEW</a>
-                <a href="index1.html" class="btn btn-1">REACH TRUCK</a>
-                <a href="index2.html" class="btn btn-2">PALLET MOVER</a>
-                <a href="index3.html" class="btn btn-3">KARTON</a>
-                <a href="index4.html" class="btn btn-4">LOAD & UNLOAD</a>
+            <nav class="navigation-menu category-nav">
+                <a href="#" class="btn btn-main active">PALLET MOVER</a>
+                <a href="reach_truck.html" class="btn btn-main">REACH TRUCK</a>
+                <a href="karton.html" class="btn btn-main">KARTON</a>
+                <a href="unloading.html" class="btn btn-main">UNLOADING</a>
+            </nav>
+
+            <nav class="navigation-menu sub-nav">
+                <a href="index.html" class="btn active">OVERVIEW</a>
+                <a href="picking_perjam.html" class="btn">PER JAM</a>
+                <a href="Pick-in_perlorong.html" class="btn">PER LORONG</a>
+                <a href="pick-in_pertransit_(sisi_timur).html" class="btn">TIMUR</a>
+                <a href="pick-in_pertransit_(sisi_barat).html" class="btn">BARAT</a>
+                <a href="pick-in_transit_jalan.html" class="btn">TRANSIT JALAN</a>
+                <a href="pick-in_perpicker.html" class="btn">PER PICKER</a>
             </nav>
         </header>
 
         <div class="stats-row">
             <div class="stat-card">
                 <span class="stat-label">Total Quantity</span>
-                <h2 id="total-qty">0</h2>
+                <h2 id="total-qty" class="stat-value">0</h2>
             </div>
             <div class="stat-card">
-                <span class="stat-label">Total Lokasi</span>
-                <h2 id="total-loc">0</h2>
+                <span class="stat-label">Lokasi Transit</span>
+                <h2 id="total-loc" class="stat-value">0</h2>
             </div>
         </div>
 
