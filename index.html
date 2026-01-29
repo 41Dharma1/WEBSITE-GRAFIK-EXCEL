@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard Data Excel</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+    <div style="width: 800px; margin: auto;">
+        <canvas id="myChart"></canvas>
+    </div>
+
+    <script>
+    // 1. ID diambil dari URL yang Anda berikan
+    const sheetId = '1vTjmjtHeut2HUwGNNG3yQ9V4q9o4Vjv77SJOGWEoZTY_zeo4kTJyVzhVhMIi--R2ZfllhxatcKYDpTQ';
+    // Gunakan query gviz untuk mendapatkan data JSON
+    const base = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json`;
+
+    fetch(base)
+        .then(res => res.text())
+        .then(data => {
+            // Membersihkan format JSON dari Google
+            const json = JSON.parse(data.substring(47).slice(0, -2));
+            const rows = json.table.rows;
+
+            // 2. Mapping Data
+            // row.c[0] adalah Kolom A, row.c[1] adalah Kolom B
+            // Kita gunakan slice(1) jika baris pertama adalah header (Judul Kolom)
+            const labels = rows.map(row => row.c[0] ? row.c[0].v : ""); 
+            const values = rows.map(row => row.c[1] ? row.c[1].v : 0);
+
+            // Jika baris pertama di Excel adalah Nama/Produk (Header), hapus dari chart:
+            // labels.shift(); 
+            // values.shift();
+
+            // 3. Render Chart
+            const ctx = document.getElementById('myChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar', 
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Data dari Google Sheets',
+                        data: values,
+                        backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        })
+        .catch(err => console.error("Error fetching data:", err));
+    </script>
+</body>
+</html>
