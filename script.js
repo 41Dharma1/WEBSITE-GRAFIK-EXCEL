@@ -1,64 +1,59 @@
-// URL Export CSV dari Google Sheets Anda
 const csvUrl = 'https://docs.google.com/spreadsheets/d/1i_9Weeg_TxntAmTJ8nlAHAns8n8OslAG-ePWxCZvdiY/export?format=csv&gid=0';
 
-async function fetchData() {
+async function updateDashboard() {
     try {
         const response = await fetch(csvUrl);
         const data = await response.text();
         
-        // Memecah baris CSV (Lewati baris header pertama)
-        const rows = data.split('\n').slice(1); 
-        const locations = {};
+        const rows = data.split('\n').slice(1);
+        const locationsMap = {};
+        let totalQtySum = 0;
 
         rows.forEach(row => {
-            // Memisahkan kolom berdasarkan koma
             const columns = row.split(',');
-            
-            // Berdasarkan struktur file Anda:
-            // Kolom index 4 (E) = QUANTITY
-            // Kolom index 5 (F) = LOKASI TRANSIT
             if (columns.length > 5) {
-                const lokasi = columns[5].trim(); 
-                const quantity = parseFloat(columns[4]) || 0; 
+                const lokasi = columns[5].trim();
+                const qty = parseFloat(columns[4]) || 0;
 
                 if (lokasi) {
-                    // Penjumlahan quantity per lokasi
-                    locations[lokasi] = (locations[lokasi] || 0) + quantity;
+                    locationsMap[lokasi] = (locationsMap[lokasi] || 0) + qty;
+                    totalQtySum += qty;
                 }
             }
         });
 
-        const labels = Object.keys(locations);
-        const values = Object.values(locations);
+        // Update Kartu Statistik
+        const sortedKeys = Object.keys(locationsMap).sort();
+        document.getElementById('total-qty').innerText = totalQtySum.toLocaleString('id-ID');
+        document.getElementById('total-loc').innerText = sortedKeys.length;
+        document.getElementById('last-update').innerText = new Date().toLocaleTimeString('id-ID');
+        document.getElementById('current-date').innerText = new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
-        // Sembunyikan loading jika data berhasil dimuat
-        document.getElementById('loading').style.display = 'none';
-        
-        renderChart(labels, values);
+        const values = sortedKeys.map(key => locationsMap[key]);
+        renderChart(sortedKeys, values);
+
     } catch (error) {
-        console.error('Gagal memuat data:', error);
-        document.getElementById('loading').innerText = 'Gagal memuat data. Periksa izin Publish to Web di Google Sheets.';
+        console.error('Error:', error);
     }
 }
 
 function renderChart(labels, values) {
-    const ctx = document.getElementById('canvasChart').getContext('2d');
+    const ctx = document.getElementById('mainBarChart').getContext('2d');
     
-    // Membuat gradien warna untuk batang grafik
-    const gradient = ctx.createLinearGradient(0, 0, 0, 400);
-    gradient.addColorStop(0, '#4318ff');
-    gradient.addColorStop(1, 'rgba(67, 24, 255, 0.1)');
+    // Gradien Warna
+    const blueGradient = ctx.createLinearGradient(0, 0, 0, 400);
+    blueGradient.addColorStop(0, '#0061ff');
+    blueGradient.addColorStop(1, '#60efff');
 
     new Chart(ctx, {
         type: 'bar',
         data: {
             labels: labels,
             datasets: [{
-                label: 'Total Quantity',
+                label: 'Quantity',
                 data: values,
-                backgroundColor: gradient,
-                borderRadius: 10,
-                borderSkipped: false,
+                backgroundColor: blueGradient,
+                borderRadius: 8,
             }]
         },
         options: {
@@ -70,17 +65,15 @@ function renderChart(labels, values) {
             scales: {
                 y: { 
                     beginAtZero: true,
-                    grid: { color: '#f0f0f0' },
-                    ticks: { color: '#a3aed0' }
+                    grid: { drawBorder: false, color: '#f0f0f0' }
                 },
                 x: { 
-                    grid: { display: false },
-                    ticks: { color: '#a3aed0' }
+                    grid: { display: false }
                 }
             }
         }
     });
 }
 
-// Jalankan fungsi saat halaman dimuat
-fetchData();
+// Jalankan saat halaman dimuat
+updateDashboard();
