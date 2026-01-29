@@ -37,7 +37,7 @@ async function fetchData() {
         renderChart(labels, values);
     } catch (error) {
         console.error('Gagal memuat data:', error);
-        document.getElementById('loading').innerText = 'Gagal memuat data Periksa internet dan izin Publish to Web di Google Sheets serta refresh ulang.';
+        document.getElementById('loading').innerText = 'Gagal memuat data. Periksa izin Publish to Web di Google Sheets.';
     }
 }
 
