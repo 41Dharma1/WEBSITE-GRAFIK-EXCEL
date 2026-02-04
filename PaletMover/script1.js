@@ -1,105 +1,84 @@
+// Gantilah URL ini dengan URL CSV dari Google Sheets Anda
+// Cara: File > Share > Publish to Web > Pilih Sheet > Pilih CSV > Publish
+const spreadsheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTjmjtHeut2HUwGNNG3yQ9V4q9o4Vjv77SJOGWEoZTY_zeo4kTJyVzhVhMIi--R2ZfllhxatcKYDpTQ/pubhtml?gid=1837149701&single=true';
+
 async function updateDashboard() {
-    const loadingEl = document.getElementById('loading');
-    // Gunakan format /pub?output=csv agar bisa dibaca sebagai teks
-    const currentCsvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTjmjtHeut2HUwGNNG3yQ9V4q9o4Vjv77SJOGWEoZTY_zeo4kTJyVzhVhMIi--R2ZfllhxatcKYDpTQ/pub?gid=1877132307&single=true&output=csv";
-
+    const loadingElement = document.getElementById('loading');
+    
     try {
-        const response = await fetch(currentCsvUrl);
-        const csvText = await response.text();
+        const response = await fetch(spreadsheetUrl);
+        const dataText = await response.text();
         
-        // Memecah baris, bersihkan string kosong, dan lewati header
-        const rows = csvText.split('\n').filter(row => row.trim() !== "").slice(1); 
+        // Mengubah CSV menjadi Array
+        const rows = dataText.split('\n').map(row => row.split(','));
         
-        let dataJam = {}, dataLorong = {}, dataTBarat = {}, 
-            dataTTimur = {}, dataTJalan = {}, dataPicker = {};
-        
-        let totalQtySum = 0;
+        // Asumsi data: Kolom A = Label/Nama, Kolom B = Quantity
+        // Lewati baris pertama (header) dengan slice(1)
+        const labels = [];
+        const values = [];
+        let totalQty = 0;
 
-        rows.forEach(row => {
-            // Split kolom secara aman
-            const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
-            
-            if (cols.length >= 10) { 
-                // Mapping Berdasarkan File CSV Anda
-                const picker = cols[5]?.replace(/"/g, "").trim();
-                const qty    = parseFloat(cols[6]) || 0;
-                const jam    = cols[7]?.replace(/"/g, "").trim();
-                const jalan  = cols[9]?.replace(/"/g, "").trim();
-                const lokasi = cols[10]?.replace(/"/g, "").trim();
-
-                // Logika Akumulasi
-                if (jam) dataJam[jam] = (dataJam[jam] || 0) + qty;
-                if (picker) dataPicker[picker] = (dataPicker[picker] || 0) + qty;
-                if (jalan) dataTJalan[jalan] = (dataTJalan[jalan] || 0) + qty;
-
-                // Memisahkan Lokasi untuk Lorong vs Transit (Asumsi berdasarkan prefix nama lokasi)
-                if (lokasi) {
-                    dataLorong[lokasi] = (dataLorong[lokasi] || 0) + qty;
-                    
-                    // Contoh logika pemisahan Barat/Timur (Sesuaikan jika ada kriteria spesifik)
-                    if (lokasi.includes("TR-W") || lokasi.startsWith("A")) {
-                        dataTBarat[lokasi] = (dataTBarat[lokasi] || 0) + qty;
-                    } else {
-                        dataTTimur[lokasi] = (dataTTimur[lokasi] || 0) + qty;
-                    }
-                }
-
-                totalQtySum += qty;
+        rows.slice(1).forEach(row => {
+            if (row[7] && row[1]) {
+                labels.push(row[0].trim());
+                const qty = parseFloat(row[8]) || 0;
+                values.push(qty);
+                totalQty += qty;
             }
         });
 
-        // Update UI Total
-        if(document.getElementById('total-qty')) 
-            document.getElementById('total-qty').innerText = totalQtySum.toLocaleString('id-ID');
+        // 1. Update Stat Cards di HTML
+        document.getElementById('total-qty').innerText = totalQty.toLocaleString('id-ID');
+        document.getElementById('total-loc').innerText = labels.length;
+
+        // 2. Render Grafik
+        renderChart(labels, values);
+
+        // 3. Update Status
+        loadingElement.innerText = "LIVE (TERKONEKSI)";
+        loadingElement.className = "badge-live"; // Tambahkan CSS hijau jika ada
         
-        if (loadingEl) loadingEl.style.display = 'none';
-
-        // Render Semua Grafik
-        renderChart('chartJam', Object.keys(dataJam).sort(), Object.values(dataJam), 'bar', '#4318ff');
-        renderChart('chartLorong', Object.keys(dataLorong).sort(), Object.values(dataLorong), 'bar', '#2a9d8f');
-        renderChart('chartTBarat', Object.keys(dataTBarat).sort(), Object.values(dataTBarat), 'bar', '#e76f51');
-        renderChart('chartTTimur', Object.keys(dataTTimur).sort(), Object.values(dataTTimur), 'bar', '#264653');
-        renderChart('chartTJalan', Object.keys(dataTJalan).sort(), Object.values(dataTJalan), 'bar', '#f4a261');
-        renderChart('chartPicker', Object.keys(dataPicker), Object.values(dataPicker), 'pie');
-
     } catch (error) {
-        console.error("Error:", error);
-        if (loadingEl) loadingEl.innerText = "Gagal memproses data.";
+        console.error('Error fetching data:', error);
+        loadingElement.innerText = "GAGAL SINKRONISASI";
+        loadingElement.style.backgroundColor = "red";
     }
 }
 
-function renderChart(canvasId, labels, values, type, color = '#4318ff') {
-    const canvas = document.getElementById(canvasId);
-    if (!canvas) return;
+let myChart; // Variabel untuk menyimpan instance chart agar tidak tumpang tindih
 
-    const existingChart = Chart.getChart(canvasId);
-    if (existingChart) existingChart.destroy();
+function renderChart(labels, data) {
+    const ctx = document.getElementById('mainBarChart').getContext('2d');
+    
+    // Jika chart sudah ada, hapus dulu sebelum buat baru (agar tidak bug saat hover)
+    if (myChart) {
+        myChart.destroy();
+    }
 
-    const ctx = canvas.getContext('2d');
-    const pieColors = ['#4318ff', '#2ec4b6', '#ff9f1c', '#e71d36', '#9b5de5', '#fb5607', '#3a86ff'];
-
-    new Chart(ctx, {
-        type: type,
+    myChart = new Chart(ctx, {
+        type: 'bar',
         data: {
             labels: labels,
             datasets: [{
-                label: 'Total Qty',
-                data: values,
-                backgroundColor: type === 'pie' ? pieColors : color,
-                borderRadius: type === 'bar' ? 6 : 0
+                label: 'Quantity Unloading',
+                data: data,
+                backgroundColor: 'rgba(52, 152, 219, 0.8)',
+                borderColor: 'rgba(41, 128, 185, 1)',
+                borderWidth: 1
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: { 
-                legend: { display: type === 'pie', position: 'bottom' } 
-            },
-            scales: type === 'bar' ? {
+            scales: {
                 y: { beginAtZero: true }
-            } : {}
+            }
         }
     });
 }
 
-document.addEventListener('DOMContentLoaded', updateDashboard);
+// Jalankan fungsi saat halaman dibuka
+updateDashboard();
+
+// Otomatis refresh setiap 5 menit
+setInterval(updateDashboard, 300000);
