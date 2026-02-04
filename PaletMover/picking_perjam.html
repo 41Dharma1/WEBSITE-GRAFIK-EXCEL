@@ -78,8 +78,8 @@
                     const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
                     
                     if (cols.length >= 2) {
-                        const label = cols[7]?.replace(/"/g, "").trim(); // Kolom A (Jam)
-                        const qty = parseFloat(cols[18]?.replace(/"/g, "")) || 0; // Kolom B (Qty)
+                        const label = cols[8]?.replace(/"/g, "").trim(); // Kolom A (Jam)
+                        const qty = parseFloat(cols[24]?.replace(/"/g, "")) || 0; // Kolom B (Qty)
 
                         if (label) {
                             dataMap[label] = (dataMap[label] || 0) + qty;
