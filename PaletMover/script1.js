@@ -19,8 +19,8 @@ async function updateDashboard() {
         let totalQty = 0;
 
         rows.slice(1).forEach(row => {
-            if (row[7] && row[1]) {
-                labels.push(row[0].trim());
+            if (row[0] && row[1]) {
+                labels.push(row[7].trim());
                 const qty = parseFloat(row[8]) || 0;
                 values.push(qty);
                 totalQty += qty;
