@@ -75,7 +75,7 @@
                     const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
                     
                     if (cols.length >= 2) {
-                        const label = cols[8]?.replace(/"/g, "").trim(); // Kolom A (Jam)
+                        const label = cols[7]?.replace(/"/g, "").trim(); // Kolom A (Jam)
                         const qty = parseFloat(cols[9]?.replace(/"/g, "")) || 0; // Kolom B (Qty)
 
                         if (label) {
