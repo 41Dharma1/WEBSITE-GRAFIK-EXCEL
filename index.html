@@ -3,33 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Overview Pallet Mover</title>
+    <title>Monitoring - Palet Mover Picking Perjam </title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link rel="stylesheet" href="./style.css">
+    <link rel="stylesheet" href="../style.css">
 </head>
 <body>
     <div class="main-container">
         <header class="dashboard-header">
             <div class="header-top">
-                <h1>📊 Overview Pallet Mover</h1>
+                <h1>📊 Palet Mover Picking Perjam  </h1>
                 <div id="loading" class="badge-live">SINKRONISASI...</div>
             </div>
             
             <nav class="navigation-menu category-nav">
-                <a href="index.html" class="btn btn-main active">PALLET MOVER</a>
-                <a href="./ReachTruck/Reach_Truck.html" class="btn btn-main">REACH TRUCK</a>
-                <a href="./Karton_Packaging/Karton_Packaging.html" class="btn btn-main">KARTON</a>
-                <a href="./Unloading/Unloading.html" class="btn btn-main">UNLOADING</a>
+                <a href="../index.html" class="btn btn-main active">PALLET MOVER</a>
+                <a href="../ReachTruck/Reach_Truck.html" class="btn btn-main">REACH TRUCK</a>
+                <a href="../Karton_Packaging/Karton_Packaging.html" class="btn btn-main">KARTON</a>
+                <a href="../Unloading/Unloading.html" class="btn btn-main">UNLOADING</a>
             </nav>
 
             <nav class="navigation-menu sub-nav">
-                <a href="index.html" class="btn active">OVERVIEW PM </a>
-                <a href="./PaletMover/picking_perjam.html" class="btn">PER JAM PM </a>
-                <a href="./PaletMover/Pick-in_perlorong.html" class="btn">PER LORONG PM</a>
-                <a href="./PaletMover/pick-in_pertransit_(sisi_timur).html" class="btn">TIMUR PM</a>
-                <a href="./PaletMover/pick-in_pertransit_(sisi_barat).html" class="btn">BARAT PM </a>
-                <a href="./PaletMover/pick-in_transit_jalan.html" class="btn">TRANSIT JALAN PM </a>
-                <a href="./PaletMover/pick-in_perpicker.html" class="btn">PER PICKER PM </a>
+                <a href="./index.html" class="btn active">PER JAM PM </a>
+                <a href="Pick-in_perlorong.html" class="btn">PER LORONG PM</a>
+                <a href="pick-in_pertransit_(sisi_timur).html" class="btn">TIMUR PM</a>
+                <a href="pick-in_pertransit_(sisi_barat).html" class="btn">BARAT PM </a>
+                <a href="pick-in_transit_jalan.html" class="btn">TRANSIT JALAN PM </a>
+                <a href="pick-in_perpicker.html" class="btn">PER PICKER PM </a>
             </nav>
         </header>
 
@@ -39,7 +38,7 @@
                 <h2 id="total-qty" class="stat-value">0</h2>
             </div>
             <div class="stat-card">
-                <span class="stat-label">Total Lokasi</span>
+                <span class="stat-label">Total Data</span>
                 <h2 id="total-loc" class="stat-value">0</h2>
             </div>
         </div>
@@ -50,6 +49,7 @@
             </div>
         </div>
     </div>
+
 <script>
         // --- 1. SETTING KHUSUS HALAMAN INI ---
         const CONFIG = {
@@ -78,7 +78,7 @@
                     
                     if (cols.length >= 2) {
                         const label = cols[8]?.replace(/"/g, "").trim(); // Kolom A (Jam)
-                        const qty = parseFloat(cols[9]?.replace(/"/g, "")) || 0; // Kolom B (Qty)
+                        const qty = parseFloat(cols[24]?.replace(/"/g, "")) || 0; // Kolom B (Qty)
 
                         if (label) {
                             dataMap[label] = (dataMap[label] || 0) + qty;
@@ -148,5 +148,6 @@
         // Jalankan saat halaman siap
         document.addEventListener('DOMContentLoaded', updateDashboard);
     </script>
+    
 </body>
 </html>
