@@ -52,7 +52,7 @@
         // --- 1. SETTING KHUSUS HALAMAN INI ---
         const CONFIG = {
             csvUrl: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTjmjtHeut2HUwGNNG3yQ9V4q9o4Vjv77SJOGWEoZTY_zeo4kTJyVzhVhMIi--R2ZfllhxatcKYDpTQ/pub?gid=1837149701&single=true&output=csv",
-            chartType: 'bar', // Bisa ganti 'line' atau 'pie'
+            chartType: 'pie', // Bisa ganti 'line' atau 'pie'
             barColor: '#4318ff', // Warna batang
             chartLabel: 'Total Quantity Per Jam' // Judul saat hover
         };
@@ -75,8 +75,8 @@
                     const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
                     
                     if (cols.length >= 2) {
-                        const label = cols[8]?.replace(/"/g, "").trim(); // Kolom A (Jam)
-                        const qty = parseFloat(cols[9]?.replace(/"/g, "")) || 0; // Kolom B (Qty)
+                        const label = cols[3]?.replace(/"/g, "").trim(); // Kolom A (Jam)
+                        const qty = parseFloat(cols[1]?.replace(/"/g, "")) || 0; // Kolom B (Qty)
 
                         if (label) {
                             dataMap[label] = (dataMap[label] || 0) + qty;
