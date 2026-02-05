@@ -3,32 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monitoring - Palet Mover Picking Perjam </title>
+    <title>Monitoring - Palet Mover Picking Perjam</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="../style.css">
 </head>
 <body>
     <div class="main-container">
         <header class="dashboard-header">
             <div class="header-top">
-                <h1>📊 Palet Mover Picking Perjam  </h1>
+                <h1>📊 Palet Mover Picking Perjam</h1>
                 <div id="loading" class="badge-live">SINKRONISASI...</div>
             </div>
             
             <nav class="navigation-menu category-nav">
                 <a href="../index.html" class="btn btn-main active">PALLET MOVER</a>
-                <a href="../ReachTruck/Reach_Truck.html" class="btn btn-main">REACH TRUCK</a>
+                <a href="../Reach_Truck/Reach_Truck.html" class="btn btn-main">REACH TRUCK</a>
                 <a href="../Karton_Packaging/Karton_Packaging.html" class="btn btn-main">KARTON</a>
                 <a href="../Unloading/Unloading.html" class="btn btn-main">UNLOADING</a>
             </nav>
 
             <nav class="navigation-menu sub-nav">
-                <a href="./index.html" class="btn active">PER JAM PM </a>
+                <a href="./index.html" class="btn active">PER JAM PM</a>
                 <a href="Pick-in_perlorong.html" class="btn">PER LORONG PM</a>
                 <a href="pick-in_pertransit_(sisi_timur).html" class="btn">TIMUR PM</a>
-                <a href="pick-in_pertransit_(sisi_barat).html" class="btn">BARAT PM </a>
-                <a href="pick-in_transit_jalan.html" class="btn">TRANSIT JALAN PM </a>
-                <a href="pick-in_perpicker.html" class="btn">PER PICKER PM </a>
+                <a href="pick-in_pertransit_(sisi_barat).html" class="btn">BARAT PM</a>
+                <a href="pick-in_transit_jalan.html" class="btn">TRANSIT JALAN PM</a>
+                <a href="pick-in_perpicker.html" class="btn">PER PICKER PM</a>
             </nav>
         </header>
 
@@ -50,13 +50,13 @@
         </div>
     </div>
 
-<script>
-        // --- 1. SETTING KHUSUS HALAMAN INI ---
+    <script>
         const CONFIG = {
+            // URL CSV yang sudah dipastikan format output=csv
             csvUrl: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTjmjtHeut2HUwGNNG3yQ9V4q9o4Vjv77SJOGWEoZTY_zeo4kTJyVzhVhMIi--R2ZfllhxatcKYDpTQ/pub?gid=1877132307&single=true&output=csv",
-            chartType: 'bar', // Bisa ganti 'line' atau 'pie'
-            barColor: '#4318ff', // Warna batang
-            chartLabel: 'Total Quantity Per Jam' // Judul saat hover
+            chartType: 'bar',
+            barColor: '#4318ff',
+            chartLabel: 'Banyak Pick-In'
         };
 
         async function updateDashboard() {
@@ -66,19 +66,25 @@
                 const response = await fetch(CONFIG.csvUrl);
                 const csvText = await response.text();
                 
-                // Pisahkan baris & hapus baris kosong (slice(1) untuk buang Header)
+                // Pisahkan baris & hapus baris kosong, lewati header
                 const rows = csvText.split(/\r?\n/).filter(row => row.trim() !== "").slice(1); 
                 
                 let dataMap = {};
                 let totalQtySum = 0;
 
                 rows.forEach(row => {
-                    // Split kolom dengan aman (handle tanda kutip di CSV)
-                    const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+                    // Regex untuk handle koma di dalam teks (CSV Standard)
+                    const cols = row.split(/,(?=(?:[^"]*"[^"]*")*[^"]*$)/);
                     
                     if (cols.length >= 2) {
-                        const label = cols[8]?.replace(/"/g, "").trim(); // Kolom A (Jam)
-                        const qty = parseFloat(cols[24]?.replace(/"/g, "")) || 0; // Kolom B (Qty)
+                        // Sesuaikan index kolom berdasarkan Google Sheets kamu
+                        // Jika Jam ada di Kolom I, maka index adalah 8.
+                        const label = cols[8]?.replace(/"/g, "").trim(); 
+                        
+                        // Jika Quantity ada di Kolom Y, maka index adalah 24.
+                        // Bersihkan karakter non-angka agar parseFloat bekerja maksimal
+                        const cleanQty = cols[24]?.replace(/"/g, "").replace(/,/g, "") || "0";
+                        const qty = parseFloat(cleanQty) || 0; 
 
                         if (label) {
                             dataMap[label] = (dataMap[label] || 0) + qty;
@@ -87,15 +93,14 @@
                     }
                 });
 
-                // Update UI Angka
+                // Update UI
                 document.getElementById('total-qty').innerText = totalQtySum.toLocaleString('id-ID');
                 document.getElementById('total-loc').innerText = Object.keys(dataMap).length;
-                
                 if (loadingEl) loadingEl.style.display = 'none';
 
-                // Siapkan Data Grafik
-                const labels = Object.keys(dataMap);
-                const values = Object.values(dataMap);
+                // Sortir labels (misal berdasarkan jam agar berurutan 07, 08, 09...)
+                const labels = Object.keys(dataMap).sort();
+                const values = labels.map(l => dataMap[l]);
 
                 renderChart(labels, values);
 
@@ -106,9 +111,9 @@
         }
 
         function renderChart(labels, values) {
-            const ctx = document.getElementById('mainBarChart').getContext('2d');
+            const canvas = document.getElementById('mainBarChart');
+            const ctx = canvas.getContext('2d');
             
-            // Hapus chart lama jika ada agar tidak tumpang tindih
             const existingChart = Chart.getChart("mainBarChart");
             if (existingChart) existingChart.destroy();
 
@@ -120,34 +125,27 @@
                         label: CONFIG.chartLabel,
                         data: values,
                         backgroundColor: CONFIG.barColor,
-                        borderRadius: 8,
-                        borderWidth: 0
+                        borderRadius: 5
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: { display: false } // Sembunyikan legend box
+                        legend: { display: false }
                     },
                     scales: {
                         y: { 
                             beginAtZero: true,
-                            grid: { color: '#f0f0f0' },
-                            ticks: { font: { size: 11 } }
+                            grid: { color: '#f0f0f0' }
                         },
-                        x: { 
-                            grid: { display: false },
-                            ticks: { font: { size: 11 } }
-                        }
+                        x: { grid: { display: false } }
                     }
                 }
             });
         }
 
-        // Jalankan saat halaman siap
         document.addEventListener('DOMContentLoaded', updateDashboard);
     </script>
-    
 </body>
 </html>
