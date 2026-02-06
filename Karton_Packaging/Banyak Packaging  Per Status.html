@@ -3,15 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monitoring - Packagin Per Status</title>
+    <title>Monitoring - Packaging Per Status</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
     <link rel="stylesheet" href="../style.css">
+    <style>
+        .chart-wrapper {
+            position: relative;
+            height: 400px;
+            width: 100%;
+            margin-top: 20px;
+        }
+    </style>
 </head>
 <body>
     <div class="main-container">
         <header class="dashboard-header">
             <div class="header-top">
-                <h1>📊 Packagin Per Status</h1>
+                <h1>📊 Packaging Per Status</h1>
                 <div id="loading" class="badge-live">SINKRONISASI...</div>
             </div>
             
@@ -36,114 +45,123 @@
                 <h2 id="total-qty" class="stat-value">0</h2>
             </div>
             <div class="stat-card">
-                <span class="stat-label">Total Data</span>
+                <span class="stat-label">Total Kategori</span>
                 <h2 id="total-loc" class="stat-value">0</h2>
             </div>
         </div>
 
         <div class="chart-card">
+            <h2 style="text-align: center; font-family: sans-serif; color: #333;">BANYAK PACKAGING PER STATUS</h2>
             <div class="chart-wrapper">
                 <canvas id="mainBarChart"></canvas>
             </div>
         </div>
     </div>
+
 <script>
-        // --- 1. SETTING KHUSUS HALAMAN INI ---
-        const CONFIG = {
-            csvUrl: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTjmjtHeut2HUwGNNG3yQ9V4q9o4Vjv77SJOGWEoZTY_zeo4kTJyVzhVhMIi--R2ZfllhxatcKYDpTQ/pub?gid=1837149701&single=true&output=csv",
-            chartType: 'pie', // Bisa ganti 'line' atau 'pie'
-            barColor: '#4318ff', // Warna batang
-            chartLabel: 'Total Quantity Per Jam' // Judul saat hover
-        };
+    // Registrasi plugin datalabels agar angka muncul di grafik
+    Chart.register(ChartDataLabels);
 
-        async function updateDashboard() {
-            const loadingEl = document.getElementById('loading');
-            
-            try {
-                const response = await fetch(CONFIG.csvUrl);
-                const csvText = await response.text();
-                
-                // Pisahkan baris & hapus baris kosong (slice(1) untuk buang Header)
-                const rows = csvText.split(/\r?\n/).filter(row => row.trim() !== "").slice(1); 
-                
-                let dataMap = {};
-                let totalQtySum = 0;
-
-                rows.forEach(row => {
-                    // Split kolom dengan aman (handle tanda kutip di CSV)
-                    const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
-                    
-                    if (cols.length >= 2) {
-                        const label = cols[3]?.replace(/"/g, "").trim(); // Kolom A (Jam)
-                        const qty = parseFloat(cols[1]?.replace(/"/g, "")) || 0; // Kolom B (Qty)
-
-                        if (label) {
-                            dataMap[label] = (dataMap[label] || 0) + qty;
-                            totalQtySum += qty;
-                        }
-                    }
-                });
-
-                // Update UI Angka
-                document.getElementById('total-qty').innerText = totalQtySum.toLocaleString('id-ID');
-                document.getElementById('total-loc').innerText = Object.keys(dataMap).length;
-                
-                if (loadingEl) loadingEl.style.display = 'none';
-
-                // Siapkan Data Grafik
-                const labels = Object.keys(dataMap);
-                const values = Object.values(dataMap);
-
-                renderChart(labels, values);
-
-            } catch (error) {
-                console.error("Fetch Error:", error);
-                if (loadingEl) loadingEl.innerText = "Gagal Memuat Data Sheet!";
-            }
+    const CONFIG = {
+        csvUrl: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTjmjtHeut2HUwGNNG3yQ9V4q9o4Vjv77SJOGWEoZTY_zeo4kTJyVzhVhMIi--R2ZfllhxatcKYDpTQ/pub?gid=1837149701&single=true&output=csv",
+        // Warna sesuai gambar: Biru Tua, Oranye, Hijau, Biru Muda
+        statusColors: {
+            'Terdaftar': '#1a5e7d',
+            'Diterima Receiving': '#e67e31',
+            'Diterima Bedeng': '#1b6d25',
+            'Keluar Bedeng / Diambil Supplier': '#21ade3'
         }
+    };
 
-        function renderChart(labels, values) {
-            const ctx = document.getElementById('mainBarChart').getContext('2d');
+    async function updateDashboard() {
+        const loadingEl = document.getElementById('loading');
+        try {
+            const response = await fetch(CONFIG.csvUrl);
+            const csvText = await response.text();
+            const rows = csvText.split(/\r?\n/).filter(row => row.trim() !== "").slice(1); 
             
-            // Hapus chart lama jika ada agar tidak tumpang tindih
-            const existingChart = Chart.getChart("mainBarChart");
-            if (existingChart) existingChart.destroy();
+            let dataMap = {};
+            let totalQtySum = 0;
 
-            new Chart(ctx, {
-                type: CONFIG.chartType,
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: CONFIG.chartLabel,
-                        data: values,
-                        backgroundColor: CONFIG.barColor,
-                        borderRadius: 8,
-                        borderWidth: 0
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false } // Sembunyikan legend box
-                    },
-                    scales: {
-                        y: { 
-                            beginAtZero: true,
-                            grid: { color: '#f0f0f0' },
-                            ticks: { font: { size: 11 } }
-                        },
-                        x: { 
-                            grid: { display: false },
-                            ticks: { font: { size: 11 } }
-                        }
+            rows.forEach(row => {
+                const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+                if (cols.length >= 2) {
+                    const label = cols[3]?.replace(/"/g, "").trim(); 
+                    const qty = parseFloat(cols[1]?.replace(/"/g, "")) || 0; 
+
+                    if (label) {
+                        dataMap[label] = (dataMap[label] || 0) + qty;
+                        totalQtySum += qty;
                     }
                 }
             });
-        }
 
-        // Jalankan saat halaman siap
-        document.addEventListener('DOMContentLoaded', updateDashboard);
-    </script>
+            document.getElementById('total-qty').innerText = totalQtySum.toLocaleString('id-ID');
+            document.getElementById('total-loc').innerText = Object.keys(dataMap).length;
+            if (loadingEl) loadingEl.style.display = 'none';
+
+            renderChart(dataMap);
+        } catch (error) {
+            console.error("Fetch Error:", error);
+            if (loadingEl) loadingEl.innerText = "Gagal Memuat Data!";
+        }
+    }
+
+    function renderChart(dataMap) {
+        const ctx = document.getElementById('mainBarChart').getContext('2d');
+        const labels = Object.keys(dataMap);
+        const values = Object.values(dataMap);
+
+        // Map warna berdasarkan label, jika label tidak terdaftar gunakan abu-abu
+        const backgroundColors = labels.map(label => CONFIG.statusColors[label] || '#cccccc');
+
+        const existingChart = Chart.getChart("mainBarChart");
+        if (existingChart) existingChart.destroy();
+
+        new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: values,
+                    backgroundColor: backgroundColors,
+                    borderWidth: 1,
+                    borderColor: '#ffffff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'right',
+                        labels: {
+                            usePointStyle: true,
+                            pointStyle: 'rect',
+                            padding: 20,
+                            font: { size: 14 }
+                        }
+                    },
+                    tooltip: { enabled: true },
+                    datalabels: {
+                        color: '#ffffff',
+                        font: { weight: 'bold', size: 16 },
+                        backgroundColor: 'rgba(0, 0, 0, 0.6)', // Box gelap transparan seperti di foto
+                        borderRadius: 4,
+                        padding: 6,
+                        formatter: (value, context) => {
+                            const sum = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                            const percentage = ((value / sum) * 100).toFixed(0) + "%";
+                            return percentage;
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', updateDashboard);
+</script>
 </body>
 </html>
