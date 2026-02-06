@@ -3,15 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monitoring -  Packagin Per bulan </title>
+    <title>Monitoring - Packaging Per Bulan</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
     <link rel="stylesheet" href="../style.css">
+    <style>
+        .chart-wrapper {
+            position: relative;
+            height: 450px;
+            width: 100%;
+            margin-top: 20px;
+        }
+        .chart-card h2 {
+            text-align: center;
+            font-family: sans-serif;
+            color: #444;
+            margin-bottom: 5px;
+        }
+    </style>
 </head>
 <body>
     <div class="main-container">
         <header class="dashboard-header">
             <div class="header-top">
-                <h1>📊 Packagin Per Bulan </h1>
+                <h1>📊 Packaging Per Bulan</h1>
                 <div id="loading" class="badge-live">SINKRONISASI...</div>
             </div>
             
@@ -24,8 +39,8 @@
 
             <nav class="navigation-menu sub-nav">
                 <a href="./Banyak Packaging PerSupplier.html" class="btn">PER PERSUPPLIER KP</a>
-                <a href="./Banyak Packaging  Per bulan.html" class="btn active">PER BULAN KP</a>
-                <a href="./Banyak Packaging  Per Status.html" class="btn">PER STATUS KP</a>
+                <a href="./Banyak Packaging Per bulan.html" class="btn active">PER BULAN KP</a>
+                <a href="./Banyak Packaging Per Status.html" class="btn">PER STATUS KP</a>
                 <a href="./Banyak Packaging Per Jenis.html" class="btn">PER JENIS RT</a>
             </nav>
         </header>
@@ -36,114 +51,114 @@
                 <h2 id="total-qty" class="stat-value">0</h2>
             </div>
             <div class="stat-card">
-                <span class="stat-label">Total Data</span>
+                <span class="stat-label">Jumlah Bulan</span>
                 <h2 id="total-loc" class="stat-value">0</h2>
             </div>
         </div>
 
         <div class="chart-card">
+            <h2>BANYAK PACKAGING PER BULAN (REG RCV)</h2>
             <div class="chart-wrapper">
                 <canvas id="mainBarChart"></canvas>
             </div>
         </div>
     </div>
- <script>
-        // --- 1. SETTING KHUSUS HALAMAN INI ---
-        const CONFIG = {
-            csvUrl: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTjmjtHeut2HUwGNNG3yQ9V4q9o4Vjv77SJOGWEoZTY_zeo4kTJyVzhVhMIi--R2ZfllhxatcKYDpTQ/pub?gid=1837149701&single=true&output=csv",
-            chartType: 'bar', // Bisa ganti 'line' atau 'pie'
-            barColor: '#4318ff', // Warna batang
-            chartLabel: 'Total Quantity Per Jam' // Judul saat hover
-        };
 
-        async function updateDashboard() {
-            const loadingEl = document.getElementById('loading');
+<script>
+    // Registrasi plugin datalabels
+    Chart.register(ChartDataLabels);
+
+    const CONFIG = {
+        csvUrl: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTjmjtHeut2HUwGNNG3yQ9V4q9o4Vjv77SJOGWEoZTY_zeo4kTJyVzhVhMIi--R2ZfllhxatcKYDpTQ/pub?gid=1837149701&single=true&output=csv",
+        chartType: 'bar',
+        barColor: '#1a5e7d', // Warna Biru Tua sesuai foto
+        chartLabel: 'Total'
+    };
+
+    async function updateDashboard() {
+        const loadingEl = document.getElementById('loading');
+        try {
+            const response = await fetch(CONFIG.csvUrl);
+            const csvText = await response.text();
+            const rows = csvText.split(/\r?\n/).filter(row => row.trim() !== "").slice(1); 
             
-            try {
-                const response = await fetch(CONFIG.csvUrl);
-                const csvText = await response.text();
-                
-                // Pisahkan baris & hapus baris kosong (slice(1) untuk buang Header)
-                const rows = csvText.split(/\r?\n/).filter(row => row.trim() !== "").slice(1); 
-                
-                let dataMap = {};
-                let totalQtySum = 0;
+            let dataMap = {};
+            let totalQtySum = 0;
 
-                rows.forEach(row => {
-                    // Split kolom dengan aman (handle tanda kutip di CSV)
-                    const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
-                    
-                    if (cols.length >= 2) {
-                        const label = cols[8]?.replace(/"/g, "").trim(); // Kolom A (Jam)
-                        const qty = parseFloat(cols[9]?.replace(/"/g, "")) || 0; // Kolom B (Qty)
+            rows.forEach(row => {
+                const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+                if (cols.length >= 10) {
+                    const label = cols[8]?.replace(/"/g, "").trim(); // Bulan (Kolom I)
+                    const qty = parseFloat(cols[9]?.replace(/"/g, "")) || 0; // Qty (Kolom J)
 
-                        if (label) {
-                            dataMap[label] = (dataMap[label] || 0) + qty;
-                            totalQtySum += qty;
-                        }
-                    }
-                });
-
-                // Update UI Angka
-                document.getElementById('total-qty').innerText = totalQtySum.toLocaleString('id-ID');
-                document.getElementById('total-loc').innerText = Object.keys(dataMap).length;
-                
-                if (loadingEl) loadingEl.style.display = 'none';
-
-                // Siapkan Data Grafik
-                const labels = Object.keys(dataMap);
-                const values = Object.values(dataMap);
-
-                renderChart(labels, values);
-
-            } catch (error) {
-                console.error("Fetch Error:", error);
-                if (loadingEl) loadingEl.innerText = "Gagal Memuat Data Sheet!";
-            }
-        }
-
-        function renderChart(labels, values) {
-            const ctx = document.getElementById('mainBarChart').getContext('2d');
-            
-            // Hapus chart lama jika ada agar tidak tumpang tindih
-            const existingChart = Chart.getChart("mainBarChart");
-            if (existingChart) existingChart.destroy();
-
-            new Chart(ctx, {
-                type: CONFIG.chartType,
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: CONFIG.chartLabel,
-                        data: values,
-                        backgroundColor: CONFIG.barColor,
-                        borderRadius: 8,
-                        borderWidth: 0
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false } // Sembunyikan legend box
-                    },
-                    scales: {
-                        y: { 
-                            beginAtZero: true,
-                            grid: { color: '#f0f0f0' },
-                            ticks: { font: { size: 11 } }
-                        },
-                        x: { 
-                            grid: { display: false },
-                            ticks: { font: { size: 11 } }
-                        }
+                    if (label) {
+                        dataMap[label] = (dataMap[label] || 0) + qty;
+                        totalQtySum += qty;
                     }
                 }
             });
-        }
 
-        // Jalankan saat halaman siap
-        document.addEventListener('DOMContentLoaded', updateDashboard);
-    </script>
+            document.getElementById('total-qty').innerText = totalQtySum.toLocaleString('id-ID');
+            document.getElementById('total-loc').innerText = Object.keys(dataMap).length;
+            if (loadingEl) loadingEl.style.display = 'none';
+
+            renderChart(Object.keys(dataMap), Object.values(dataMap));
+        } catch (error) {
+            console.error("Fetch Error:", error);
+            if (loadingEl) loadingEl.innerText = "Gagal Memuat Data!";
+        }
+    }
+
+    function renderChart(labels, values) {
+        const ctx = document.getElementById('mainBarChart').getContext('2d');
+        const existingChart = Chart.getChart("mainBarChart");
+        if (existingChart) existingChart.destroy();
+
+        new Chart(ctx, {
+            type: CONFIG.chartType,
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: CONFIG.chartLabel,
+                    data: values,
+                    backgroundColor: CONFIG.barColor,
+                    barPercentage: 0.5, // Lebar batang sesuai foto
+                    borderRadius: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { 
+                        display: true, 
+                        position: 'right',
+                        labels: { usePointStyle: true, pointStyle: 'rect' }
+                    },
+                    datalabels: {
+                        anchor: 'end',
+                        align: 'top',
+                        color: '#444',
+                        font: { weight: 'normal', size: 13 },
+                        formatter: (value) => value.toLocaleString('id-ID')
+                    }
+                },
+                scales: {
+                    y: { 
+                        beginAtZero: true,
+                        max: 9000, // Menyamakan skala y seperti di foto (0 - 9000)
+                        grid: { color: '#e0e0e0' },
+                        ticks: { stepSize: 1000 }
+                    },
+                    x: { 
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', updateDashboard);
+</script>
 </body>
 </html>
