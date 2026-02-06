@@ -10,9 +10,10 @@
     <style>
         .chart-wrapper {
             position: relative;
-            height: 400px; /* Ukuran pas untuk Pie Chart */
+            height: 450px; /* Ukuran yang ideal untuk Pie Chart */
             width: 100%;
             margin: 20px auto;
+            padding: 10px;
         }
     </style>
 </head>
@@ -47,7 +48,7 @@
                 <h2 id="total-qty" class="stat-value">0</h2>
             </div>
             <div class="stat-card">
-                <span class="stat-label">Total Kategori</span>
+                <span class="stat-label">Kategori</span>
                 <h2 id="total-loc" class="stat-value">0</h2>
             </div>
         </div>
@@ -60,12 +61,12 @@
     </div>
 
 <script>
-    // Registrasi plugin datalabels
+    // Registrasi plugin agar teks muncul di dalam Pie
     Chart.register(ChartDataLabels);
 
     const CONFIG = {
         csvUrl: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTjmjtHeut2HUwGNNG3yQ9V4q9o4Vjv77SJOGWEoZTY_zeo4kTJyVzhVhMIi--R2ZfllhxatcKYDpTQ/pub?gid=549934827&single=true&output=csv",
-        // Warna Biru (Import) dan Oranye (Lokal) sesuai gambar
+        // Warna Biru (Import) dan Oranye (Lokal) sesuai gambar referensi
         colors: ['#5b9bd5', '#ed7d31'] 
     };
 
@@ -81,12 +82,11 @@
 
             rows.forEach(row => {
                 const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
-                if (cols.length >= 2) {
-                    // Penyesuaian kolom: Ambil Group Source (IMPORT/LOKAL) dan Qty-nya
+                if (cols.length >= 12) {
                     const label = cols[11]?.replace(/"/g, "").trim().toUpperCase(); 
                     const qty = parseFloat(cols[12]?.replace(/"/g, "")) || 0; 
 
-                    if (label && (label === "IMPORT" || label === "LOKAL")) {
+                    if (label === "IMPORT" || label === "LOKAL") {
                         dataMap[label] = (dataMap[label] || 0) + qty;
                         totalQtySum += qty;
                     }
@@ -97,7 +97,11 @@
             document.getElementById('total-loc').innerText = Object.keys(dataMap).length;
             if (loadingEl) loadingEl.style.display = 'none';
 
-            renderChart(Object.keys(dataMap), Object.values(dataMap));
+            // Mengurutkan agar urutan warna konsisten (Import Biru, Lokal Oranye)
+            const labels = ["IMPORT", "LOKAL"];
+            const values = [dataMap["IMPORT"] || 0, dataMap["LOKAL"] || 0];
+
+            renderChart(labels, values);
         } catch (error) {
             console.error("Error:", error);
             if (loadingEl) loadingEl.innerText = "Gagal Memuat Data!";
@@ -126,26 +130,28 @@
                 plugins: {
                     legend: {
                         display: true,
-                        position: 'right', // Legend di samping kanan sesuai gambar
+                        position: 'right', // Legend di kanan seperti di foto
                         labels: {
                             usePointStyle: true,
-                            font: { size: 12 }
+                            padding: 20,
+                            font: { size: 14 }
                         }
                     },
                     datalabels: {
-                        color: '#fff',
+                        color: '#ffffff', // Teks persentase warna putih
                         font: {
                             weight: 'bold',
-                            size: 14
+                            size: 18 // Teks besar dan jelas
                         },
                         formatter: (value, ctx) => {
-                            // Menghitung persentase secara otomatis
                             let sum = 0;
                             let dataArr = ctx.chart.data.datasets[0].data;
                             dataArr.map(data => { sum += data; });
                             let percentage = (value * 100 / sum).toFixed(0) + "%";
-                            return percentage;
-                        }
+                            return percentage; // Mengembalikan angka persentase (15% atau 85%)
+                        },
+                        anchor: 'center',
+                        align: 'center'
                     }
                 }
             }
