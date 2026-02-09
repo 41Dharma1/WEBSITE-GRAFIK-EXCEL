@@ -84,8 +84,8 @@
                 const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
                 if (cols.length >= 5) {
                     // Berdasarkan Sheet Anda: Kolom C (Index 2) adalah Nama Checker, Kolom D (Index 3) adalah Qty
-                    const label = cols[21]?.replace(/"/g, "").trim(); 
-                    const qty = parseFloat(cols[0]?.replace(/"/g, "")) || 0; 
+                    const label = cols[22]?.replace(/"/g, "").trim(); 
+                    const qty = parseFloat(cols[21]?.replace(/"/g, "")) || 0; 
 
                     if (label && label !== "0") {
                         dataMap[label] = (dataMap[label] || 0) + qty;
