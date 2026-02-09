@@ -8,25 +8,27 @@
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
     <link rel="stylesheet" href="../style.css">
     <style>
+        /* Menyesuaikan tampilan background dan kartu seperti di Reference 2 */
         .chart-card {
-            background: linear-gradient(to bottom, #ffffff, #d1d1d1); /* Efek gradasi background seperti di foto */
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            background: linear-gradient(to bottom, #f8f9fa, #e9ecef); 
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            border: 1px solid #ddd;
         }
         .chart-wrapper {
             position: relative;
-            height: 450px;
+            height: 500px;
             width: 100%;
-            margin-top: 10px;
         }
         .chart-title {
             text-align: center;
-            font-family: 'Arial Black', sans-serif;
-            font-size: 28px;
-            color: #333;
-            margin-bottom: 10px;
-            text-transform: uppercase;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-weight: 800;
+            font-size: 32px;
+            color: #444;
+            margin-bottom: 20px;
+            letter-spacing: 1px;
         }
     </style>
 </head>
@@ -34,8 +36,8 @@
     <div class="main-container">
         <header class="dashboard-header">
             <div class="header-top">
-                <h1>📊 Packaging Per Status</h1>
-                <div id="loading" class="badge-live">MENUNGGU DATA...</div>
+                <h1>📊 Dashboard Karton</h1>
+                <div id="loading" class="badge-live">MEMPROSES DATA...</div>
             </div>
             
             <nav class="navigation-menu category-nav">
@@ -55,11 +57,11 @@
 
         <div class="stats-row">
             <div class="stat-card">
-                <span class="stat-label">Total Quantity</span>
+                <span class="stat-label">Total Volume</span>
                 <h2 id="total-qty" class="stat-value">0</h2>
             </div>
             <div class="stat-card">
-                <span class="stat-label">Total Kategori</span>
+                <span class="stat-label">Jumlah Status</span>
                 <h2 id="total-loc" class="stat-value">0</h2>
             </div>
         </div>
@@ -77,7 +79,7 @@
 
     const CONFIG = {
         csvUrl: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTjmjtHeut2HUwGNNG3yQ9V4q9o4Vjv77SJOGWEoZTY_zeo4kTJyVzhVhMIi--R2ZfllhxatcKYDpTQ/pub?gid=1837149701&single=true&output=csv",
-        // Skema warna identik dengan gambar
+        // Warna spesifik berdasarkan Reference 2
         statusColors: {
             'Terdaftar': '#1a5e7d',
             'Diterima Receiving': '#e67e31',
@@ -91,6 +93,7 @@
         try {
             const response = await fetch(CONFIG.csvUrl);
             const csvText = await response.text();
+            // Parsing CSV sederhana
             const rows = csvText.split(/\r?\n/).filter(row => row.trim() !== "").slice(1); 
             
             let dataMap = {};
@@ -98,9 +101,9 @@
 
             rows.forEach(row => {
                 const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
-                if (cols.length >= 2) {
-                    const label = cols[1]?.replace(/"/g, "").trim(); 
-                    const qty = parseFloat(cols[6]?.replace(/"/g, "")) || 0; 
+                if (cols.length >= 7) {
+                    const label = cols[1]?.replace(/"/g, "").trim(); // Status ada di Kolom B
+                    const qty = parseFloat(cols[6]?.replace(/"/g, "")) || 0; // Quantity ada di Kolom G
 
                     if (label) {
                         dataMap[label] = (dataMap[label] || 0) + qty;
@@ -115,8 +118,8 @@
 
             renderChart(dataMap);
         } catch (error) {
-            console.error("Error:", error);
-            if (loadingEl) loadingEl.innerText = "Gagal Memuat Data!";
+            console.error("Error Fetching Data:", error);
+            if (loadingEl) loadingEl.innerText = "GAGAL MEMUAT DATA";
         }
     }
 
@@ -124,7 +127,7 @@
         const ctx = document.getElementById('mainPieChart').getContext('2d');
         const labels = Object.keys(dataMap);
         const values = Object.values(dataMap);
-        const backgroundColors = labels.map(label => CONFIG.statusColors[label] || '#cccccc');
+        const backgroundColors = labels.map(label => CONFIG.statusColors[label] || '#999999');
 
         const existingChart = Chart.getChart("mainPieChart");
         if (existingChart) existingChart.destroy();
@@ -136,41 +139,45 @@
                 datasets: [{
                     data: values,
                     backgroundColor: backgroundColors,
-                    borderWidth: 1,
-                    borderColor: '#ffffff'
+                    borderWidth: 2,
+                    borderColor: '#ffffff',
+                    hoverOffset: 20
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                layout: {
-                    padding: { right: 50 }
-                },
                 plugins: {
                     legend: {
                         display: true,
                         position: 'right',
                         labels: {
                             usePointStyle: true,
-                            pointStyle: 'rect',
-                            padding: 25,
-                            font: { size: 16, weight: '500' },
-                            color: '#333',
-                            // Simulasi background legend abu-abu seperti di foto
-                            boxWidth: 15
+                            pointStyle: 'rectRounded',
+                            padding: 30,
+                            font: { size: 16, weight: '600' },
+                            color: '#333'
                         }
                     },
                     datalabels: {
                         color: '#ffffff',
-                        font: { weight: 'bold', size: 18 },
-                        backgroundColor: 'rgba(60, 60, 60, 0.9)', // Box hitam pekat
-                        borderRadius: 2,
-                        padding: { top: 8, bottom: 8, left: 10, right: 10 },
-                        // Efek bayangan teks datalabel
-                        display: (context) => context.dataset.data[context.dataIndex] > 0,
+                        font: { weight: 'bold', size: 20 },
+                        backgroundColor: 'rgba(40, 40, 40, 0.85)', // Box gelap transparan
+                        borderRadius: 4,
+                        padding: 10,
+                        anchor: 'center',
+                        align: 'center',
                         formatter: (value, context) => {
                             const sum = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
-                            return ((value / sum) * 100).toFixed(0) + "%";
+                            const percentage = ((value / sum) * 100).toFixed(0);
+                            return percentage > 0 ? percentage + "%" : null;
+                        },
+                        // Menambahkan efek drop shadow pada label
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.5)'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: (item) => ` ${item.label}: ${item.raw.toLocaleString('id-ID')} unit`
                         }
                     }
                 }
