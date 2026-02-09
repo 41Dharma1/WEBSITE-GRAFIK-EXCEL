@@ -83,8 +83,8 @@
             rows.forEach(row => {
                 const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
                 if (cols.length >= 12) {
-                    const label = cols[11]?.replace(/"/g, "").trim().toUpperCase(); 
-                    const qty = parseFloat(cols[12]?.replace(/"/g, "")) || 0; 
+                    const label = cols[6]?.replace(/"/g, "").trim().toUpperCase(); 
+                    const qty = parseFloat(cols[6]?.replace(/"/g, "")) || 0; 
 
                     if (label === "IMPORT" || label === "LOKAL") {
                         dataMap[label] = (dataMap[label] || 0) + qty;
